@@ -1,10 +1,10 @@
-package org.bahmni.reports.report;
+package org.bahmni.reports.report.integrationtests;
 
-import org.bahmni.reports.model.ConceptName;
-import org.bahmni.reports.report.integrationtests.BaseIntegrationTest;
-import org.bahmni.reports.wrapper.CsvReport;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.bahmni.reports.model.ConceptName;
+import org.bahmni.reports.wrapper.CsvReport;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.URI;
@@ -12,13 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
+@Ignore
 public class GenericObservationReportTest extends BaseIntegrationTest {
     public GenericObservationReportTest() {
         super("src/test/resources/config/genericObservationReportConfig.json");

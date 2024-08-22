@@ -18,7 +18,7 @@ import org.postgresql.Driver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.multipart.commons.CommonsMultipartResolver;
+import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 
 import java.beans.PropertyVetoException;
 
@@ -122,11 +122,8 @@ public class BahmniReportsConfiguration {
     }
 
     @Bean
-    public CommonsMultipartResolver multipartResolver() {
-        CommonsMultipartResolver commonsMultipartResolver = new CommonsMultipartResolver();
-        commonsMultipartResolver.setDefaultEncoding("utf-8");
-        commonsMultipartResolver.setMaxUploadSize(getFileUploadMaxSize());
-        return commonsMultipartResolver;
+    public StandardServletMultipartResolver multipartResolver() {
+        return new StandardServletMultipartResolver();
     }
 
     @Bean
@@ -141,17 +138,4 @@ public class BahmniReportsConfiguration {
         dataSource.setPreferredTestQuery("SELECT 1;");
         return dataSource;
     }
-
-    private long getFileUploadMaxSize() {
-        String fileUploadMaxSize = bahmniReportsProperties.getFileUploadMaxSize();
-        if (fileUploadMaxSize != null) {
-            try {
-                return Long.valueOf(fileUploadMaxSize.trim());
-            } catch (NumberFormatException nfe) {
-                logger.error("Property for max file upload is incorrectly defined. Falling back on default 5MB");
-            }
-        }
-        return DEFAULT_MAX_UPLOAD_SIZE;
-    }
-
 }

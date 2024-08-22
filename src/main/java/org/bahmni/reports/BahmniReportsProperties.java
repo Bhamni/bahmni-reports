@@ -139,8 +139,4 @@ public class BahmniReportsProperties {
     public String getMartPassword() {
         return props.getProperty("bahmni.mart.password");
     }
-
-    public String getFileUploadMaxSize() {
-        return props.getProperty("reports.config.fileUploadMaxSize");
-    }
 }

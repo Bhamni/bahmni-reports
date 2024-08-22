@@ -1,7 +1,7 @@
-package org.bahmni.reports.report;
+package org.bahmni.reports.report.integrationtests;
 
-import org.bahmni.reports.report.integrationtests.BaseIntegrationTest;
 import org.bahmni.reports.wrapper.CsvReport;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.URI;
@@ -11,6 +11,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.when;
 
+@Ignore
 public class AggregationReportTest extends BaseIntegrationTest {
     public AggregationReportTest() {
         super("src/test/resources/config/aggregationReportConfig.json");

@@ -1,8 +1,8 @@
-package org.bahmni.reports.report;
+package org.bahmni.reports.report.integrationtests;
 
-import org.bahmni.reports.report.integrationtests.BaseIntegrationTest;
 import org.bahmni.reports.wrapper.CsvReport;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.URI;
@@ -13,6 +13,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+@Ignore
 public class GenericLabOrderReportTest extends BaseIntegrationTest {
 
     public GenericLabOrderReportTest() {

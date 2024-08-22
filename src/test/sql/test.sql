@@ -1,2 +1,2 @@
 select * from someTable
-    where a > 10;
+where a > 10

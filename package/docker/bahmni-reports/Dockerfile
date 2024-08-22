@@ -1,10 +1,10 @@
-FROM amazoncorretto:11
+FROM amazoncorretto:17
 
 ENV SERVER_PORT=8051
 ENV BASE_DIR=/var/run/bahmni-reports
 ENV CONTEXT_PATH=/bahmnireports
 ENV WAR_DIRECTORY=/var/run/bahmni-reports/bahmni-reports
-ENV SERVER_OPTS="-Xms512m -Xmx1024m -XX:PermSize=256m -XX:MaxPermSize=512m -Dsun.net.client.defaultConnectTimeout=600000 -Dsun.net.client.defaultReadTimeout=600000"
+ENV SERVER_OPTS="-Xms512m -Xmx1024m -Dsun.net.client.defaultConnectTimeout=600000 -Dsun.net.client.defaultReadTimeout=600000"
 ENV DEBUG_OPTS="-agentlib:jdwp=transport=dt_socket,address=8003,server=y,suspend=n"
 
 RUN mkdir -p /var/log/bahmni-reports
@@ -24,7 +24,7 @@ RUN chmod +x /etc/wait-for
 COPY target/bahmnireports.war /etc/bahmni-reports/bahmnireports.war
 RUN cd ${WAR_DIRECTORY} && jar xvf /etc/bahmni-reports/bahmnireports.war
 
-ADD https://repo.mybahmni.org/packages/build/bahmni-embedded-tomcat-8.0.42.jar /opt/bahmni-reports/lib/bahmni-embedded-tomcat.jar
+ADD https://repo.mybahmni.org/packages/build/bahmni-embedded-tomcat-10-1.0-SNAPSHOT.jar /opt/bahmni-reports/lib/bahmni-embedded-tomcat.jar
 
 COPY package/resources/log4j2.properties ${WAR_DIRECTORY}/WEB-INF/classes/
 COPY package/resources/run-liquibase.sh /etc/bahmni-reports/

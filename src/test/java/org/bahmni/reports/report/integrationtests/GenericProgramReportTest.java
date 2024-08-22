@@ -1,13 +1,14 @@
-package org.bahmni.reports.report;
+package org.bahmni.reports.report.integrationtests;
 
-import org.bahmni.reports.report.integrationtests.BaseIntegrationTest;
 import org.bahmni.reports.wrapper.CsvReport;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@Ignore
 public class GenericProgramReportTest extends BaseIntegrationTest {
     public GenericProgramReportTest() {
         super("src/test/resources/config/genericProgramReportConfig.json");

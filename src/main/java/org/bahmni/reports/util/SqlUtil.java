@@ -2,7 +2,7 @@ package org.bahmni.reports.util;
 
 import net.sf.dynamicreports.jasper.builder.JasperReportBuilder;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.quartz.impl.jdbcjobstore.InvalidConfigurationException;
 
 import java.sql.Connection;
@@ -19,7 +19,7 @@ public class SqlUtil {
         }
         StringBuilder sb = new StringBuilder();
         for (String item : list) {
-            sb.append("\\'").append(StringEscapeUtils.escapeSql(item)).append("\\',");
+            sb.append("\\'").append(escapeSql(item)).append("\\',");
         }
         return sb.substring(0, sb.length() - 1);
     }
@@ -30,7 +30,7 @@ public class SqlUtil {
         }
         StringBuilder sb = new StringBuilder();
         for (String item : list) {
-            sb.append("'").append(StringEscapeUtils.escapeSql(item)).append("',");
+            sb.append("'").append(escapeSql(item)).append("',");
         }
         return sb.substring(0, sb.length() - 1);
     }
@@ -59,6 +59,7 @@ public class SqlUtil {
 
         return jasperReport;
     }
+
     public static ResultSet executeSqlWithStoredProc(Connection connection, String formattedSql) throws SQLException, InvalidConfigurationException {
         Statement stmt;
         ResultSet rs;
@@ -75,15 +76,21 @@ public class SqlUtil {
                 }
                 hasMoreResultSets = stmt.getMoreResults(); //true if it is a resultset
             }
-        }catch (SQLSyntaxErrorException e){
+        } catch (SQLSyntaxErrorException e) {
             throw new InvalidConfigurationException("Column that you have configured in sortBy is either not present in output of the report or it is invalid column");
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
             throw e;
         }
 
         return null;
+    }
+
+    public static String escapeSql(String str) {
+        if (str == null) {
+            return null;
+        }
+        return StringUtils.replace(str, "'", "''");
     }
 }
 

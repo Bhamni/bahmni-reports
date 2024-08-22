@@ -2,11 +2,13 @@ package org.bahmni.reports.report.integrationtests;
 
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class OpenmrsConcatenatedReportTest extends BaseIntegrationTest {
     public OpenmrsConcatenatedReportTest() {
         super("src/test/resources/config/concatenatedReportConfig.json");

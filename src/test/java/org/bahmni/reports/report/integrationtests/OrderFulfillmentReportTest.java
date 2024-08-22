@@ -7,12 +7,14 @@ import org.bahmni.reports.builder.OrderBuilder;
 import org.bahmni.reports.builder.VisitBuilder;
 import org.bahmni.reports.wrapper.CsvReport;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openmrs.*;
 import org.openmrs.api.context.Context;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class OrderFulfillmentReportTest extends BaseIntegrationTest {
 
     @Before

@@ -3,16 +3,16 @@ package org.bahmni.reports.web.security;
 import org.bahmni.reports.BahmniReportsProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
+import org.springframework.web.servlet.HandlerInterceptor;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
 
 @Component(value = "authenticationFilter")
-public class AuthenticationFilter extends HandlerInterceptorAdapter {
+public class AuthenticationFilter implements HandlerInterceptor {
 
     public static final String REPORTING_COOKIE_NAME = "reporting_session";
     private OpenMRSAuthenticator authenticator;

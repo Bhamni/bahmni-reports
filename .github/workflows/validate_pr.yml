@@ -14,12 +14,12 @@ jobs:
         ports:
           - 3306:3306
     steps:
-      - name: Setup Java 11
+      - name: Setup Java 17
         uses: actions/setup-java@v3
         with:
           distribution: 'corretto'
-          java-version: '11'
+          java-version: '17'
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Test and build package
-        run: ./mvnw -T 4 --no-transfer-progress clean install -U -DskipTests
+        run: ./mvnw -T 4 --no-transfer-progress clean install -U

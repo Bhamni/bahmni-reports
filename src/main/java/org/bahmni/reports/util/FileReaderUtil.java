@@ -15,11 +15,10 @@ public class FileReaderUtil {
     private static final Logger logger = LogManager.getLogger(FileReaderUtil.class);
 
     public static String getFileContent(String relativePath) {
-        Path path = null;
         try {
-            path = Paths.get(FileReaderUtil.class.getClassLoader().getResource(relativePath).toURI());
+            Path path = Paths.get(FileReaderUtil.class.getClassLoader().getResource(relativePath).toURI());
             return Files.lines(path, StandardCharsets.UTF_8).collect(Collectors.joining("\n"));
-        } catch (IOException | URISyntaxException e) {
+        } catch (IOException | URISyntaxException | NullPointerException e) {
             logger.error("Error reading file at location {} - {}", relativePath, e);
             throw new RuntimeException(e);
         }
@@ -33,8 +32,7 @@ public class FileReaderUtil {
             return new String(Files.readAllBytes(Paths.get(filePath)), StandardCharsets.UTF_8);
         } catch (IOException e) {
             logger.error("File at location {} not found {}", filePath, e);
+            throw new RuntimeException(e);
         }
-        return null;
     }
 }
-

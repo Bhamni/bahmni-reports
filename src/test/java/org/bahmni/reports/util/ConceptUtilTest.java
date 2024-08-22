@@ -1,6 +1,7 @@
 package org.bahmni.reports.util;
 
 import org.bahmni.webclients.HttpClient;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -13,7 +14,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class ConceptUtilTest {
-
 
     @Mock
     HttpClient httpClient;
@@ -29,22 +29,24 @@ public class ConceptUtilTest {
             "        ]\n" +
             "    }}";
 
-
     private String openmrsRootUrl = "http://localhost:8080/openmrs/ws/rest/v1";
+
+    @Before
+    public void setUp() {
+        initMocks(this);
+    }
 
     @Test
     public void shouldGetConceptDataType() throws ConceptDataTypeException, URISyntaxException {
-        initMocks(this);
-        when(httpClient.get(new URI("http://localhost:8080/openmrs/ws/rest/v1/concept/concept"))).thenReturn(responseBoolean);
+        when(httpClient.get(new URI(openmrsRootUrl + "/concept/concept"))).thenReturn(responseBoolean);
         ConceptDataTypes content = ConceptUtil.getConceptDataType("concept", httpClient, openmrsRootUrl);
         assertEquals(content, ConceptDataTypes.Boolean);
     }
 
     @Test
-    public void shouldRetrunOnlyOneConceptDataType() throws ConceptDataTypeException, URISyntaxException {
-        initMocks(this);
-        when(httpClient.get(new URI("http://localhost:8080/openmrs/ws/rest/v1/concept/concept1"))).thenReturn(responseBoolean);
-        when(httpClient.get(new URI("http://localhost:8080/openmrs/ws/rest/v1/concept/concept2"))).thenReturn(responseBoolean);
+    public void shouldReturnOnlyOneConceptDataType() throws ConceptDataTypeException, URISyntaxException {
+        when(httpClient.get(new URI(openmrsRootUrl + "/concept/concept1"))).thenReturn(responseBoolean);
+        when(httpClient.get(new URI(openmrsRootUrl + "/concept/concept2"))).thenReturn(responseBoolean);
         ConceptDataTypes content = ConceptUtil.getConceptDataType(Arrays.asList("concept1", "concept2"), httpClient, openmrsRootUrl);
         assertEquals(content, ConceptDataTypes.Boolean);
     }

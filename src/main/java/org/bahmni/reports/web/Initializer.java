@@ -1,8 +1,8 @@
 package org.bahmni.reports.web;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRegistration.Dynamic;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRegistration.Dynamic;
 
 import org.bahmni.reports.web.security.SecurityConfig;
 import org.springframework.web.WebApplicationInitializer;

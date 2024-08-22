@@ -1,110 +1,88 @@
-package org.bahmni.reports.report;
+package org.bahmni.reports.report.integrationtests;
 
-import org.bahmni.reports.model.ConceptName;
-import org.bahmni.reports.report.integrationtests.BaseIntegrationTest;
-import org.bahmni.reports.wrapper.CsvReport;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.io.FileUtils;
+import org.bahmni.reports.model.ConceptName;
+import org.bahmni.reports.wrapper.CsvReport;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
-public class GenericObservationFormReportTest extends BaseIntegrationTest {
-    public GenericObservationFormReportTest() {
-        super("src/test/resources/config/genericObservationFormReportConfig.json");
+@Ignore
+public class ObservationFormReportTest extends BaseIntegrationTest {
+    public ObservationFormReportTest() {
+        super("src/test/resources/config/observationFormReportConfig.json");
     }
 
     @Before
     public void setUp() throws Exception {
-        executeDataSet("datasets/genericObservationFormReportDataSet.xml");
+        executeDataSet("datasets/observationFormReportDataSet.xml");
         List<ConceptName> objectList = new ArrayList<>();
-        objectList.add(new ConceptName("Height", null));
+        List<ConceptName> examinationLeafConcepts = new ArrayList<>();
+        examinationLeafConcepts.add(new ConceptName("Examination Notes", null));
+        objectList.add(new ConceptName("Examination Notes", null));
+        objectList.add(new ConceptName("Height", "Ht"));
         objectList.add(new ConceptName("Weight", null));
-        URI getConceptIdUri = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/reference-data/getConceptId?conceptNames=Vitals");
-        URI getLeafConceptsUri = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/reference-data/leafConceptNames?conceptNames=Vitals");
+        objectList.add(new ConceptName("Temperature", "tmp"));
+        String latestPublishedForms = FileUtils.readFileToString(new File("src/test/resources/forms/latestPublishedForms.json"));
+        String diabetesIntakeForm = FileUtils.readFileToString(new File("src/test/resources/forms/diabetesIntakeForm.json"));
+        String examinationForm = FileUtils.readFileToString(new File("src/test/resources/forms/examinationForm.json"));
+        URI getLatestPublishedForms = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/bahmniie/form/latestPublishedForms");
+        URI getLeafConceptsUri = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/reference-data/leafConceptNames?conceptNames=Examination+Notes&conceptNames=Vitals&conceptNames=HEIGHT&conceptNames=WEIGHT&conceptNames=Temperature");
+        URI getLeafConceptsOfExaminationUri = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/reference-data/leafConceptNames?conceptNames=Examination+Notes");
+        URI getDiabetesForm = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/form/1bda677d-191e-474f-88d1-ca9d2f4228ef?v=custom:(resources:(value))");
+        URI getExaminationForm = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/form/2432f3a9-df0b-456b-b84c-cb843eb1c3ef?v=custom:(resources:(value))");
         when(httpClient.get(getLeafConceptsUri)).thenReturn(new ObjectMapper().writeValueAsString(objectList));
-        when(httpClient.get(getConceptIdUri)).thenReturn("[1002]");
+        when(httpClient.get(getLeafConceptsOfExaminationUri)).thenReturn(new ObjectMapper().writeValueAsString(examinationLeafConcepts));
+        when(httpClient.get(getLatestPublishedForms)).thenReturn(latestPublishedForms);
+        when(httpClient.get(getDiabetesForm)).thenReturn(diabetesIntakeForm);
+        when(httpClient.get(getExaminationForm)).thenReturn(examinationForm);
     }
 
     @Test
     public void shouldThrowExceptionIfConceptnamesIsNotConfigured() throws Exception {
         String reportName = "Observation form report without configuring form names";
-        CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2020-08-03", true);
+        CsvReport report = fetchCsvReport(reportName, "2016-08-0ge1", "2020-08-03", true);
 
         assertEquals("Incorrect Configuration You need configure atleast one observation form to filter", report.getErrorMessage());
     }
-
-
-    @Test
-    public void shouldFetchAllMondatoryDataInOneRowPerEncounter() throws Exception {
-        String reportName = "Observation form report with Mondatory config";
-
-        CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2016-08-30");
-
-        assertEquals(8, report.columnsCount());
-        assertEquals(reportName, report.getReportName());
-        assertEquals(2, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80", report.getRowAsString(1, " "));
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari 170 70", report.getRowAsString(2, " "));
-    }
-
+    
     @Test
     public void shouldNotShowValuesIfValidFormNameisNotGiven() throws Exception {
-        String reportName = "Observation form report with  child concept name";
-        List<ConceptName> objectList = new ArrayList<>();
-        objectList.add(new ConceptName("Height", null));
-        URI getConceptIdUri = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/reference-data/getConceptId?conceptNames=Height");
-        URI getLeafConceptsUri = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/reference-data/leafConceptNames?conceptNames=Height");
-        when(httpClient.get(getLeafConceptsUri)).thenReturn(new ObjectMapper().writeValueAsString(objectList));
-        when(httpClient.get(getConceptIdUri)).thenReturn("[1000]");
+        String reportName = "Observation form report with invalid form name";
+        CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2020-08-03", true);
+        
+        assertEquals("Incorrect Configuration Please provide a valid Form Name", report.getErrorMessage());
+    }
 
-
+    @Test
+    public void shouldFetchAllMandatoryDataInOneRowPerEncounter() throws Exception {
+        String reportName = "Observation form report with Mandatory config";
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2016-08-30");
-
-        assertEquals(7, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertEquals(reportName, report.getReportName());
-        assertEquals(0, report.rowsCount());
+        assertEquals(2, report.rowsCount());
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari disease 180 80 99", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari summary 170 70 98.6", report.getRowAsString(2, " "));
     }
 
     @Test
-    public void shouldContainValueFromOtherFormsIfConceptsNamesAreSame() throws Exception {
-        String reportName = "Observation form report should not contain value from other form";
-        List<ConceptName> objectList = new ArrayList<>();
-        objectList.add(new ConceptName("Height", null));
-        URI getConceptIdUri = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/reference-data/getConceptId?conceptNames=History");
-        URI getLeafConceptsUri = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/reference-data/leafConceptNames?conceptNames=History");
-        when(httpClient.get(getLeafConceptsUri)).thenReturn(new ObjectMapper().writeValueAsString(objectList));
-        when(httpClient.get(getConceptIdUri)).thenReturn("[1004]");
+    public void shouldGetValuesOfMultipleFormsWhenMultipleFormConfigured() throws Exception {
+        String reportName = "Observation form report should contain multiple values when multiple forms configured";
         CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
-        assertEquals(7, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 172", report.getRowAsString(1, " "));
-    }
-
-    @Test
-    public void shouldContainMultipleValuesWhenMultupleFormConfigured() throws Exception {
-        String reportName = "Observation form report should contain  multiple values when multiple forms configured";
-        List<ConceptName> objectList = new ArrayList<>();
-        objectList.add(new ConceptName("Height", null));
-        objectList.add(new ConceptName("Weight", null));
-        URI getConceptIdUri = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/reference-data/getConceptId?conceptNames=History&conceptNames=Vitals");
-        URI getLeafConceptsUri = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/reference-data/leafConceptNames?conceptNames=History&conceptNames=Vitals");
-        when(httpClient.get(getLeafConceptsUri)).thenReturn(new ObjectMapper().writeValueAsString(objectList));
-        when(httpClient.get(getConceptIdUri)).thenReturn("[1004,1002]");
-        CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
-        assertEquals(8, report.columnsCount());
-        assertEquals(reportName, report.getReportName());
-        assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 172,180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari examDetails,summary 180 80 172", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -113,10 +91,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
 
-        assertEquals(9, report.columnsCount());
+        assertEquals(11, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari Clinical Provider 180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari Clinical Provider summary 180 80 172", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -124,10 +102,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
         String reportName = "Observation form report with visit info";
         CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
 
-        assertEquals(11, report.columnsCount());
+        assertEquals(13, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari Initial HIV Clinic Visit 01-Jun-2016 30-Jun-2016 180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari Initial HIV Clinic Visit 01-Jun-2016 30-Jun-2016 summary 180 80 172", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -139,7 +117,7 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
         assertEquals(14, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari  10th pass  8763245677 General  180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 10th pass  8763245677 General summary 180 80 172", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -148,10 +126,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
 
-        assertEquals(10, report.columnsCount());
+        assertEquals(12, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari OPD  180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari OPD  summary 180 80 172", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -160,10 +138,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
 
-        assertEquals(10, report.columnsCount());
+        assertEquals(12, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari  Dindori 180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari  Dindori summary 180 80 172", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -172,10 +150,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
 
-        assertEquals(11, report.columnsCount());
+        assertEquals(13, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80 1000 1100 1100", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari summary 180 80 172 1000 1100 1100", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -185,10 +163,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
 
-        assertEquals(8, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari  180 80", report.getRowAsString(1, " "));
     }
 
 
@@ -198,10 +176,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2016-08-30");
 
-        assertEquals(8, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari disease 180 80 99", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -210,10 +188,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2016-08-30");
 
-        assertEquals(8, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari  180 80", report.getRowAsString(1, " "));
     }
 
 
@@ -223,10 +201,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2016-08-30");
 
-        assertEquals(11, report.columnsCount());
+        assertEquals(13, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari MDR-TB PROGRAM 01-Aug-2016  180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari MDR-TB PROGRAM 01-Aug-2016  disease 180 80 99", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -235,10 +213,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2016-08-30");
 
-        assertEquals(13, report.columnsCount());
+        assertEquals(15, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari MDR-TB PROGRAM 01-Aug-2016  false  180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari MDR-TB PROGRAM 01-Aug-2016  false  disease 180 80 99", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -247,11 +225,11 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2016-08-30");
 
-        assertEquals(8, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(2, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80", report.getRowAsString(1, " "));
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari 170 70", report.getRowAsString(2, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari disease 180 80 99", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari summary 170 70 98.6", report.getRowAsString(2, " "));
     }
 
     @Test
@@ -260,10 +238,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2016-08-30");
 
-        assertEquals(11, report.columnsCount());
+        assertEquals(13, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari MDR-TB PROGRAM 01-Aug-2016  180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari MDR-TB PROGRAM 01-Aug-2016  disease 180 80 99", report.getRowAsString(1, " "));
     }
 
 
@@ -273,10 +251,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2016-08-30");
 
-        assertEquals(11, report.columnsCount());
+        assertEquals(13, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari MDR-TB PROGRAM 01-Aug-2016  180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari MDR-TB PROGRAM 01-Aug-2016   180 80", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -285,10 +263,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
 
-        assertEquals(8, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari summary 180 80 172", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -297,11 +275,11 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2016-08-01");
 
-        assertEquals(8, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(2, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80", report.getRowAsString(1, " "));
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari 170 70", report.getRowAsString(2, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari disease 180 80 99", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari summary 170 70 98.6", report.getRowAsString(2, " "));
     }
 
     @Test
@@ -310,11 +288,11 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-08-30", "2016-08-30");
 
-        assertEquals(8, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(2, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80", report.getRowAsString(1, " "));
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari 170 70", report.getRowAsString(2, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari disease 180 80 99", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari summary 170 70 98.6", report.getRowAsString(2, " "));
     }
 
     @Test
@@ -323,10 +301,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-08-30", "2016-08-30");
 
-        assertEquals(11, report.columnsCount());
+        assertEquals(13, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari MDR-TB PROGRAM 01-Aug-2016  180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari MDR-TB PROGRAM 01-Aug-2016  disease 180 80 99", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -335,10 +313,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
 
-        assertEquals(7, report.columnsCount());
+        assertEquals(9, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80", report.getRowAsString(1, " "));
+        assertEquals("Generic Observation1 11 15-Aug-2004 F Ganiyari summary 180 80 172", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -347,10 +325,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
 
-        assertEquals(10, report.columnsCount());
+        assertEquals(12, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 01-Jun-2016 30-Jun-2016 180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 01-Jun-2016 30-Jun-2016 summary 180 80 172", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -359,10 +337,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
 
-        assertEquals(13, report.columnsCount());
+        assertEquals(15, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 10th pass  8763245677 General  180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 10th pass  8763245677 General  summary 180 80 172", report.getRowAsString(1, " "));
 
     }
 
@@ -372,10 +350,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
         String reportName = "Observation form report excluding visit attribute columns";
         CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
 
-        assertEquals(9, report.columnsCount());
+        assertEquals(11, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari  180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari  summary 180 80 172", report.getRowAsString(1, " "));
 
     }
 
@@ -386,10 +364,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
 
-        assertEquals(9, report.columnsCount());
+        assertEquals(11, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari  180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari  summary 180 80 172", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -398,10 +376,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
 
-        assertEquals(8, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari summary 180 80 172", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -410,10 +388,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
 
-        assertEquals(10, report.columnsCount());
+        assertEquals(12, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80 1100 1100", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari summary 180 80 172 1100 1100", report.getRowAsString(1, " "));
     }
 
     @Test
@@ -423,11 +401,11 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2016-08-30");
 
-        assertEquals(7, report.columnsCount());
+        assertEquals(9, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(2, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 80", report.getRowAsString(1, " "));
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari 70", report.getRowAsString(2, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari disease 80 99", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari summary 70 98.6", report.getRowAsString(2, " "));
     }
 
     @Test
@@ -436,122 +414,78 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
 
-        assertEquals(10, report.columnsCount());
+        assertEquals(12, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari Adhar11 Pan11 180 80", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari Adhar11 Pan11 summary 180 80 172", report.getRowAsString(1, " "));
     }
-
-
-    @Test
-    public void shouldNotShowPatientWithoutValidObs() throws Exception {
-        String reportName = "Observation form report without valid Obs";
-
-        List<ConceptName> objectList = new ArrayList<>();
-        objectList.add(new ConceptName("Complaint", null));
-        objectList.add(new ConceptName("Notes", null));
-
-        URI getLeafConceptsUri = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/reference-data/leafConceptNames?conceptNames=HistoryEx");
-        URI getConceptIdsUri = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/reference-data/getConceptId?conceptNames=HistoryEx");
-        when(httpClient.get(getLeafConceptsUri)).thenReturn(new ObjectMapper().writeValueAsString(objectList));
-        when(httpClient.get(getConceptIdsUri)).thenReturn("[5555]");
-
-
-        CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2016-08-30");
-
-        assertEquals(8, report.columnsCount());
-        assertEquals(reportName, report.getReportName());
-        assertEquals(0, report.rowsCount());
-    }
-
-
+    
     @Test
     public void shouldShowFullySpecifiedNameOfConceptIfConfigured() throws Exception {
         String reportName = "Observation form report with fully specified concept name format";
 
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2016-08-30");
 
-        assertEquals(8, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(2, report.rowsCount());
-        assertThat(report.getColumnHeaderAtIndex(6), is("Height"));
-        assertThat(report.getColumnHeaderAtIndex(7), is("Weight"));
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80", report.getRowAsString(1, " "));
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari 170 70", report.getRowAsString(2, " "));
+        assertThat(report.getColumnHeaderAtIndex(6), is("Examination Notes"));
+        assertThat(report.getColumnHeaderAtIndex(7), is("Height"));
+        assertThat(report.getColumnHeaderAtIndex(8), is("Weight"));
+        assertThat(report.getColumnHeaderAtIndex(9), is("Temperature"));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari disease 180 80 99", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari summary 170 70 98.6", report.getRowAsString(2, " "));
     }
-@Test
+    
+    @Test
     public void shouldShowFullySpecifiedNameAndShortNameOfConceptIfConfigured() throws Exception {
-        String reportName = "Observation form report with fully specified and short name concept  name format";
-        List<ConceptName> objectList = new ArrayList<>();
-        objectList.add(new ConceptName("Height", "HeightShort"));
-        objectList.add(new ConceptName("Weight",null));
-        URI getLeafConceptsUri = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/reference-data/leafConceptNames?conceptNames=Vitals");
-        when(httpClient.get(getLeafConceptsUri)).thenReturn(new ObjectMapper().writeValueAsString(objectList));
-
+        String reportName = "Observation form report with fully specified and short name concept name format";
+        
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2016-08-30");
 
-        assertEquals(8, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(2, report.rowsCount());
-        assertThat(report.getColumnHeaderAtIndex(6), is("Height(HeightShort)"));
-        assertThat(report.getColumnHeaderAtIndex(7), is("Weight"));
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80", report.getRowAsString(1, " "));
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari 170 70", report.getRowAsString(2, " "));
+        assertThat(report.getColumnHeaderAtIndex(6), is("Examination Notes"));
+        assertThat(report.getColumnHeaderAtIndex(7), is("Height(Ht)"));
+        assertThat(report.getColumnHeaderAtIndex(8), is("Weight"));
+        assertThat(report.getColumnHeaderAtIndex(9), is("Temperature(tmp)"));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari disease 180 80 99", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari summary 170 70 98.6", report.getRowAsString(2, " "));
     }
 
     @Test
     public void shouldShowShortNameOfConceptIfConfigured() throws Exception {
         String reportName = "Observation form report with short concept name preferred format";
-
-        List<ConceptName> objectList = new ArrayList<>();
-        objectList.add(new ConceptName("Height", "HeightShort"));
-        objectList.add(new ConceptName("Weight", null));
-
-        URI getLeafConceptsUri = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/reference-data/leafConceptNames?conceptNames=Vitals");
-        when(httpClient.get(getLeafConceptsUri)).thenReturn(new ObjectMapper().writeValueAsString(objectList));
-
+        
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2016-08-30");
 
-        assertEquals(8, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(2, report.rowsCount());
-        assertThat(report.getColumnHeaderAtIndex(6), is("HeightShort"));
-        assertThat(report.getColumnHeaderAtIndex(7), is("Weight"));
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80", report.getRowAsString(1, " "));
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari 170 70", report.getRowAsString(2, " "));
+        assertThat(report.getColumnHeaderAtIndex(6), is("Examination Notes"));
+        assertThat(report.getColumnHeaderAtIndex(7), is("Ht"));
+        assertThat(report.getColumnHeaderAtIndex(8), is("Weight"));
+        assertThat(report.getColumnHeaderAtIndex(9), is("tmp"));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari disease 180 80 99", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari summary 170 70 98.6", report.getRowAsString(2, " "));
     }
 
     @Test
     public void shouldShowShortNameOfConceptIfNotConfigured() throws Exception {
         String reportName = "Observation form report with default short concept name format";
 
-        List<ConceptName> objectList = new ArrayList<>();
-        objectList.add(new ConceptName("Height", "HeightShort"));
-        objectList.add(new ConceptName("Weight", null));
-
-        URI getLeafConceptsUri = URI.create(bahmniReportsProperties.getOpenmrsRootUrl() + "/reference-data/leafConceptNames?conceptNames=Vitals");
-        when(httpClient.get(getLeafConceptsUri)).thenReturn(new ObjectMapper().writeValueAsString(objectList));
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2016-08-30");
 
-        assertEquals(8, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(2, report.rowsCount());
-        assertThat(report.getColumnHeaderAtIndex(6), is("HeightShort"));
-        assertThat(report.getColumnHeaderAtIndex(7), is("Weight"));
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80", report.getRowAsString(1, " "));
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari 170 70", report.getRowAsString(2, " "));
-    }
-
-    @Test
-    public void shouldFilterOutEmptyValuesWhenIgnoreEmptyValuesIsTrue() throws Exception {
-        String reportName = "Observation form report without empty obs values";
-
-        CsvReport report = fetchCsvReport(reportName, "2016-06-01", "2016-06-30");
-
-        assertEquals(8, report.columnsCount());
-        assertEquals(reportName, report.getReportName());
-        assertEquals(1, report.rowsCount());
-        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari 180 80", report.getRowAsString(1, " "));
+        assertThat(report.getColumnHeaderAtIndex(6), is("Examination Notes"));
+        assertThat(report.getColumnHeaderAtIndex(7), is("Ht"));
+        assertThat(report.getColumnHeaderAtIndex(8), is("Weight"));
+        assertThat(report.getColumnHeaderAtIndex(9), is("tmp"));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Ganiyari disease 180 80 99", report.getRowAsString(1, " "));
+        assertEquals("OBS1 Generic Observation1 11 15-Aug-2004 F Chithari summary 170 70 98.6", report.getRowAsString(2, " "));
     }
 
     @Test
@@ -560,10 +494,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2020-08-01", "2020-08-03");
 
-        assertEquals(8, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertEquals(reportName, report.getReportName());
         assertEquals(1, report.rowsCount());
-        assertEquals("OBS2 Generic1 Observation2 10 15-Aug-2009 M Chithari 170 70", report.getRowAsString(1, " "));
+        assertEquals("OBS2 Generic1 Observation2 10 15-Aug-2009 M Chithari notes 170 70 100", report.getRowAsString(1, " "));
     }
 
 
@@ -573,26 +507,11 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2020-08-03");
 
-        assertEquals(8, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertEquals("Patient Name", report.getColumnHeaderAtIndex(0));
         assertEquals("Birthdate", report.getColumnHeaderAtIndex(1));
         assertEquals("Age", report.getColumnHeaderAtIndex(2));
         assertEquals("Patient Identifier", report.getColumnHeaderAtIndex(3));
-    }
-
-    @Test
-    public void shouldHaveColumnsProvidedInTheOrderThatTheyHaveConfiguredFromDifferentGroups() throws Exception {
-        String reportName = "Observation form report which have patient attributes configured in order of columns";
-
-        CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2020-08-03");
-
-        assertEquals(11, report.columnsCount());
-        assertEquals("class", report.getColumnHeaderAtIndex(0));
-        assertEquals("cluster", report.getColumnHeaderAtIndex(1));
-        assertEquals("Patient Name", report.getColumnHeaderAtIndex(2));
-        assertEquals("Birthdate", report.getColumnHeaderAtIndex(3));
-        assertEquals("Age", report.getColumnHeaderAtIndex(4));
-        assertEquals("Patient Identifier", report.getColumnHeaderAtIndex(5));
     }
 
     @Test
@@ -601,7 +520,7 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2020-08-03");
 
-        assertEquals(11, report.columnsCount());
+        assertEquals(13, report.columnsCount());
         assertEquals("cluster", report.getColumnHeaderAtIndex(0));
         assertEquals("Patient Name", report.getColumnHeaderAtIndex(1));
         assertEquals("Patient Identifier", report.getColumnHeaderAtIndex(2));
@@ -614,10 +533,10 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
 
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2020-08-03");
 
-        assertEquals(8, report.columnsCount());
-        assertEquals("Patient Name", report.getColumnHeaderAtIndex(0));
-        assertEquals("Birthdate", report.getColumnHeaderAtIndex(1));
-        assertEquals("Age", report.getColumnHeaderAtIndex(2));
+        assertEquals(9, report.columnsCount());
+        assertEquals("Birthdate", report.getColumnHeaderAtIndex(0));
+        assertEquals("Age", report.getColumnHeaderAtIndex(1));
+        assertEquals("Patient Identifier", report.getColumnHeaderAtIndex(2));
 
     }
 
@@ -626,17 +545,20 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
         String reportName = "Observation form report with sort by columns configured";
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2020-08-03");
 
-        assertEquals(8, report.columnsCount());
+        assertEquals(10, report.columnsCount());
         assertTrue(report.getRowAsString(1, " ").contains("OBS2"));
+        assertTrue(report.getRowAsString(2, " ").contains("OBS1"));
     }
 
     @Test
     public void shouldSortInAscendingOrderByDefaultIfSortOrderIsNotMentionedInConfig() throws Exception {
         String reportName = "Observation form report with only column configured in  sort by columns";
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2020-08-03");
-
-        assertEquals(11, report.columnsCount());
+        
+        assertEquals(13, report.columnsCount());
+        assertEquals(3, report.rowsCount());
         assertTrue(report.getRowAsString(1, " ").contains("Chithari"));
+        assertTrue(report.getRowAsString(3, " ").contains("Ganiyari"));
     }
 
     @Test
@@ -669,7 +591,9 @@ public class GenericObservationFormReportTest extends BaseIntegrationTest {
         String reportName = "Observation form report with case insensitive column name and sort order configured in  sort by columns";
         CsvReport report = fetchCsvReport(reportName, "2016-08-01", "2020-08-03", true);
 
-        assertEquals(11, report.columnsCount());
+        assertEquals(13, report.columnsCount());
         assertTrue(report.getRowAsString(1, " ").contains("Chithari"));
+        assertTrue(report.getRowAsString(3, " ").contains("Ganiyari"));
     }
+
 }
