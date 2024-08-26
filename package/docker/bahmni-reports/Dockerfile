@@ -4,7 +4,7 @@ ENV SERVER_PORT=8051
 ENV BASE_DIR=/var/run/bahmni-reports
 ENV CONTEXT_PATH=/bahmnireports
 ENV WAR_DIRECTORY=/var/run/bahmni-reports/bahmni-reports
-ENV SERVER_OPTS="-Xms512m -Xmx1024m -XX:PermSize=256m -XX:MaxPermSize=512m -Dsun.net.client.defaultConnectTimeout=600000 -Dsun.net.client.defaultReadTimeout=600000"
+ENV SERVER_OPTS="-Xms512m -Xmx1024m -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m -Dsun.net.client.defaultConnectTimeout=600000 -Dsun.net.client.defaultReadTimeout=600000"
 ENV DEBUG_OPTS="-agentlib:jdwp=transport=dt_socket,address=8003,server=y,suspend=n"
 
 RUN mkdir -p /var/log/bahmni-reports
