@@ -10,13 +10,13 @@
     <version>0.94-SNAPSHOT</version>
 
     <properties>
-        <spring.version>5.3.27</spring.version>
+        <spring.version>5.3.39</spring.version>
         <dynamicreports.version>4.0.0</dynamicreports.version>
         <jackson.version>2.17.0</jackson.version>
         <skipDump>true</skipDump>
         <skipConfig>true</skipConfig>
         <openMRSVersion>2.5.7</openMRSVersion>
-        <log4jVersion>2.17.2</log4jVersion>
+        <log4jVersion>2.23.1</log4jVersion>
         <bahmniJavaUtils.version>0.94.3</bahmniJavaUtils.version>
         <junitVersion>4.13</junitVersion>
         <powerMockVersion>2.0.7</powerMockVersion>
@@ -81,7 +81,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.18.1</version>
                     <configuration>
-                        <argLine>-Xmx1024m -XX:MaxPermSize=2056m</argLine>
+                        <argLine>-Xmx1024m -XX:MaxMetaspaceSize=2056m</argLine>
                         <includes>
                             <include>**/*Test.java</include>
                         </includes>
@@ -105,7 +105,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
-            <version>5.3.27</version>
+            <version>${spring.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -137,7 +137,22 @@
                     <groupId>org.apache.commons</groupId>
                     <artifactId>commons-lang3</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.codehaus.castor</groupId>
+                    <artifactId>castor</artifactId>
+                </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.castor</groupId>
+            <artifactId>castor</artifactId>
+            <version>1.4.1</version>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.11.0</version>
         </dependency>
         <dependency>
             <groupId>net.sourceforge.dynamicreports</groupId>
@@ -145,14 +160,20 @@
             <version>${dynamicreports.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.8.1</version>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
         </dependency>
         <dependency>
             <groupId>net.sourceforge.dynamicreports</groupId>
             <artifactId>dynamicreports-googlecharts</artifactId>
             <version>${dynamicreports.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.velocity</groupId>
+                    <artifactId>velocity</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.mchange</groupId>
@@ -187,7 +208,7 @@
         <dependency>
             <groupId>com.jayway.jsonpath</groupId>
             <artifactId>json-path</artifactId>
-            <version>2.6.0</version>
+            <version>2.9.0</version>
         </dependency>
         <dependency>
             <groupId>org.antlr</groupId>
@@ -213,6 +234,16 @@
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
             <version>1.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.9</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.4.12</version>
         </dependency>
         <dependency>
             <groupId>org.openmrs.api</groupId>
@@ -300,6 +331,12 @@
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>5.2.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-compress</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.quartz-scheduler</groupId>
