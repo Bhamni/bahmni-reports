@@ -7,7 +7,7 @@
     <groupId>org.bahmni</groupId>
     <artifactId>reports</artifactId>
     <packaging>war</packaging>
-    <version>0.94-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
 
     <properties>
         <spring.version>5.3.39</spring.version>
@@ -17,7 +17,7 @@
         <skipConfig>true</skipConfig>
         <openMRSVersion>2.5.7</openMRSVersion>
         <log4jVersion>2.23.1</log4jVersion>
-        <bahmniJavaUtils.version>0.94.3</bahmniJavaUtils.version>
+        <bahmniJavaUtils.version>1.0.0</bahmniJavaUtils.version>
         <junitVersion>4.13</junitVersion>
         <powerMockVersion>2.0.7</powerMockVersion>
     </properties>
